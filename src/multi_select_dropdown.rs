@@ -41,6 +41,7 @@ pub struct Props<T: MultiSelectDropdownItemDisplay> {
 
 pub enum Msg<T> {
     Toggle(Rc<T>),
+    ToggleDropdown,
 }
 
 pub struct MultiSelectDropdown<T: MultiSelectDropdownItemDisplay> {
@@ -49,6 +50,7 @@ pub struct MultiSelectDropdown<T: MultiSelectDropdownItemDisplay> {
     selected_options: Vec<Rc<T>>,
     on_select: Callback<Vec<Rc<T>>>,
     max_selections: Option<usize>,
+    is_open: bool,
 }
 
 impl<T: MultiSelectDropdownItemDisplay> Component for MultiSelectDropdown<T> {
@@ -62,6 +64,7 @@ impl<T: MultiSelectDropdownItemDisplay> Component for MultiSelectDropdown<T> {
             props: ctx.props().clone(),
             on_select: ctx.props().on_select.clone(),
             max_selections: ctx.props().max_selections.clone(),
+            is_open: false,
         }
     }
 
@@ -92,6 +95,10 @@ impl<T: MultiSelectDropdownItemDisplay> Component for MultiSelectDropdown<T> {
                 self.on_select.emit(self.selected_options.clone());
                 true
             }
+            Msg::ToggleDropdown => {
+                self.is_open = !self.is_open;
+                true
+            }
         }
     }
     
@@ -109,8 +116,21 @@ impl<T: MultiSelectDropdownItemDisplay> Component for MultiSelectDropdown<T> {
             }
         }).collect::<Vec<_>>();
     
-        T::Layout::layout(&items)
+        html! {
+            <div class="multiselect-dropdown">
+                <button onclick={ctx.link().callback(|_| Msg::ToggleDropdown)}>
+                    { if self.is_open { "Close" } else { "Open" } }
+                </button>
+                { if self.is_open {
+                    T::Layout::layout(&items)
+                  } else {
+                    html! {}
+                  }
+                }
+            </div>
+        }
     }
+    
     
 }
 
