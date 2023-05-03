@@ -1,6 +1,8 @@
 //rainfrog/src/dropdown.rs
 use std::rc::Rc;
 use yew::prelude::*;
+use log::debug;
+use crate::debug::RainfrogDebug;
 
 pub enum Msg<T> {
     Select(Rc<T>),
@@ -19,7 +21,6 @@ pub struct Props<T: DropdownItemDisplay> {
     pub options: Vec<Rc<T>>,
     pub on_select: Callback<Rc<T>>,
 }
-
 
 impl<T: DropdownItemDisplay> Component for Dropdown<T> {
     type Message = Msg<T>;
@@ -42,6 +43,7 @@ impl<T: DropdownItemDisplay> Component for Dropdown<T> {
                     self.on_select.emit(option.clone());
                     self.is_open = false;
                 }
+                debug!("Dropdown updated: selected_index = {:?}", self.selected_index);
                 true
             }
             Msg::Toggle => {
@@ -54,6 +56,7 @@ impl<T: DropdownItemDisplay> Component for Dropdown<T> {
     fn changed(&mut self, _ctx: &Context<Self>, props: &Self::Properties) -> bool {
         self.options = props.options.clone();
         self.on_select = props.on_select.clone();
+        debug!("Dropdown changed: options = {:?}", self.options.iter().map(|opt| opt.debug_info()).collect::<Vec<_>>());
         true
     }
 
@@ -94,7 +97,6 @@ impl<T: DropdownItemDisplay> Component for Dropdown<T> {
     }
 }
 
-
-pub trait DropdownItemDisplay: PartialEq + Clone + 'static {
+pub trait DropdownItemDisplay: RainfrogDebug + PartialEq + Clone + 'static {
     fn render(&self) -> Html;
 }
