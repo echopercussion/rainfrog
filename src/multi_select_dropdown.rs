@@ -2,14 +2,7 @@ use std::{rc::Rc, ops::Deref};
 use yew::prelude::*;
 use log::debug;
 
-pub trait MultiSelectDropdownItemDisplay: PartialEq + Clone + 'static {
-    type Layout: Layout;
-    fn render(&self) -> Html;
-}
 
-pub trait Layout {
-    fn layout(items: &[Html]) -> Html;
-}
 
 pub struct ListLayout;
 impl Layout for ListLayout {
@@ -146,4 +139,13 @@ impl<T: MultiSelectDropdownItemDisplay + std::fmt::Debug> Component for MultiSel
         }
     }
      
+}
+
+pub trait MultiSelectDropdownItemDisplay: PartialEq + Clone + 'static {
+    type Layout: Layout;
+    fn render(&self) -> Html;
+}
+
+pub trait Layout {
+    fn layout(items: &[Html]) -> Html;
 }
