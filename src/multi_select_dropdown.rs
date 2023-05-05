@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{rc::Rc, ops::Deref};
 use yew::prelude::*;
 use log::debug;
 
@@ -60,6 +60,7 @@ impl<T: MultiSelectDropdownItemDisplay + std::fmt::Debug> Component for MultiSel
     type Properties = Props<T>;
 
     fn create(ctx: &Context<Self>) -> Self {
+        debug!("Test Debug");
         MultiSelectDropdown {
             options: ctx.props().options.clone(),
             selected_options: vec![],
@@ -74,6 +75,10 @@ impl<T: MultiSelectDropdownItemDisplay + std::fmt::Debug> Component for MultiSel
         if self.props != *ctx.props() {
             self.props = ctx.props().clone();
             self.options = ctx.props().options.clone();
+            // Update the selected_options
+            self.selected_options.retain(|selected_option| {
+            self.options.iter().any(|option| *option.deref() == *selected_option.deref())
+        });
             true
         } else {
             false
@@ -84,8 +89,7 @@ impl<T: MultiSelectDropdownItemDisplay + std::fmt::Debug> Component for MultiSel
         match msg {
             Msg::MultiItemToggle(option) => {
                 debug!("MultiItemToggle Message");
-                if let Some(index) = self.selected_options.iter().position(|selected| Rc::ptr_eq(selected, &option)) {
-                    debug!("Option {:?} Deselected", self.selected_options.get(index));
+                if let Some(index) = self.selected_options.iter().position(|selected| *selected.deref() == *option.deref()) {                    debug!("Option {:?} Deselected", self.selected_options.get(index));
                     self.selected_options.remove(index);
                 } else {
                     if let Some(max_selections) = self.max_selections {
@@ -111,20 +115,21 @@ impl<T: MultiSelectDropdownItemDisplay + std::fmt::Debug> Component for MultiSel
     
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let items = self.options.iter().map(|option| {
-            let is_selected = self.selected_options.iter().any(|selected| Rc::ptr_eq(selected, option));
+        let create_option = |option: &Rc<T>, ctx: &Context<Self>| {
+            let is_selected = self.selected_options.iter().any(|selected| *selected.deref() == *option.deref());
             let mut option_class = vec!["item"];
             if is_selected {
                 option_class.push("selected");
             }
-            let link = ctx.link().clone();
             let option_clone = Rc::clone(&option);
             html! {
-                <div class={option_class.join(" ")} onclick={link.callback(move |_| Msg::MultiItemToggle(Rc::clone(&option_clone)))}>
+                <div class={option_class.join(" ")} onclick={ctx.link().callback(move |_| Msg::MultiItemToggle(Rc::clone(&option_clone)))}>
                     { option.render() }
                 </div>
             }
-        }).collect::<Vec<_>>();
+        };
+    
+        let items = self.options.iter().map(|option| create_option(option, ctx)).collect::<Vec<_>>();
     
         html! {
             <div class="multiselect-dropdown">
@@ -139,5 +144,6 @@ impl<T: MultiSelectDropdownItemDisplay + std::fmt::Debug> Component for MultiSel
                 }
             </div>
         }
-    }  
+    }
+     
 }
